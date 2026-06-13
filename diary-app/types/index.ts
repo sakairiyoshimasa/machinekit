@@ -5,8 +5,17 @@ export interface DiaryEntry {
   content: string
   mood: string | null
   date: string
+  is_public: boolean
   created_at: string
   updated_at: string
+}
+
+export interface Comment {
+  id: string
+  entry_id: string
+  user_id: string
+  content: string
+  created_at: string
 }
 
 export interface ChatMessage {

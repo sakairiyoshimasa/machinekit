@@ -32,15 +32,17 @@ export default function EditDiaryPage() {
     title,
     content,
     mood,
+    isPublic,
   }: {
     title: string
     content: string
     mood: Mood | null
+    isPublic: boolean
   }) => {
     setIsSaving(true)
     const { error } = await supabase
       .from('diary_entries')
-      .update({ title: title || '無題', content, mood, updated_at: new Date().toISOString() })
+      .update({ title: title || '無題', content, mood, is_public: isPublic, updated_at: new Date().toISOString() })
       .eq('id', id)
 
     if (!error) {
@@ -82,6 +84,7 @@ export default function EditDiaryPage() {
             initialTitle={entry.title}
             initialContent={entry.content}
             initialMood={entry.mood as Mood | null}
+            initialIsPublic={entry.is_public ?? false}
             date={formattedDate}
             onSave={handleSave}
             isSaving={isSaving}

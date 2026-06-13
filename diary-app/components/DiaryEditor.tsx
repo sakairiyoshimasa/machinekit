@@ -1,15 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Save, Loader2 } from 'lucide-react'
+import { Save, Loader2, Globe, Lock } from 'lucide-react'
 import { Mood, MOOD_EMOJI, MOOD_LABELS } from '@/types'
 
 interface DiaryEditorProps {
   initialTitle?: string
   initialContent?: string
   initialMood?: Mood | null
+  initialIsPublic?: boolean
   date: string
-  onSave: (data: { title: string; content: string; mood: Mood | null }) => Promise<void>
+  onSave: (data: { title: string; content: string; mood: Mood | null; isPublic: boolean }) => Promise<void>
   isSaving?: boolean
 }
 
@@ -19,6 +20,7 @@ export default function DiaryEditor({
   initialTitle = '',
   initialContent = '',
   initialMood = null,
+  initialIsPublic = false,
   date,
   onSave,
   isSaving = false,
@@ -26,6 +28,7 @@ export default function DiaryEditor({
   const [title, setTitle] = useState(initialTitle)
   const [content, setContent] = useState(initialContent)
   const [mood, setMood] = useState<Mood | null>(initialMood)
+  const [isPublic, setIsPublic] = useState(initialIsPublic)
 
   useEffect(() => {
     if (initialTitle) setTitle(initialTitle)
@@ -36,7 +39,7 @@ export default function DiaryEditor({
   }, [initialContent])
 
   const handleSave = () => {
-    onSave({ title, content, mood })
+    onSave({ title, content, mood, isPublic })
   }
 
   return (
@@ -46,18 +49,32 @@ export default function DiaryEditor({
           <p className="text-xs text-gray-400">{date}</p>
           <h2 className="font-semibold text-gray-700 text-sm mt-0.5">日記を書く</h2>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={isSaving || !content.trim()}
-          className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
-        >
-          {isSaving ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Save className="w-3.5 h-3.5" />
-          )}
-          保存
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsPublic(v => !v)}
+            title={isPublic ? '公開中（クリックで非公開）' : '非公開（クリックで公開）'}
+            className={`flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg border transition-all ${
+              isPublic
+                ? 'text-amber-600 border-amber-300 bg-amber-50'
+                : 'text-gray-400 border-gray-200'
+            }`}
+          >
+            {isPublic ? <Globe className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+            {isPublic ? '公開' : '非公開'}
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={isSaving || !content.trim()}
+            className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
+          >
+            {isSaving ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Save className="w-3.5 h-3.5" />
+            )}
+            保存
+          </button>
+        </div>
       </div>
 
       <div className="p-4 border-b border-gray-100">

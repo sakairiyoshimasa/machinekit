@@ -5,7 +5,7 @@ import { DiaryEntry } from '@/types'
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import Link from 'next/link'
-import { PenLine, BookOpen, LogOut } from 'lucide-react'
+import { PenLine, BookOpen, LogOut, Users } from 'lucide-react'
 
 export default async function DiaryListPage() {
   const supabase = await createClient()
@@ -39,6 +39,13 @@ export default async function DiaryListPage() {
             <h1 className="font-bold text-gray-800">AI日記</h1>
           </div>
           <div className="flex items-center gap-2">
+            <Link
+              href="/feed"
+              className="flex items-center gap-1.5 text-gray-500 hover:text-gray-700 text-sm px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 transition-all"
+            >
+              <Users className="w-3.5 h-3.5" />
+              フィード
+            </Link>
             <Link
               href="/diary/new"
               className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"

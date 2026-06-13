@@ -31,10 +31,12 @@ export default function NewDiaryPage() {
     title,
     content,
     mood,
+    isPublic,
   }: {
     title: string
     content: string
     mood: Mood | null
+    isPublic: boolean
   }) => {
     setIsSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
@@ -48,6 +50,7 @@ export default function NewDiaryPage() {
         content,
         mood,
         date: today,
+        is_public: isPublic,
       })
       .select()
       .single()
