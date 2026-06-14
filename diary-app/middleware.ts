@@ -29,8 +29,9 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
   const isApiRoute = request.nextUrl.pathname.startsWith('/api')
+  const isPublicPage = request.nextUrl.pathname === '/help'
 
-  if (!user && !isAuthPage && !isApiRoute && request.nextUrl.pathname !== '/') {
+  if (!user && !isAuthPage && !isApiRoute && !isPublicPage && request.nextUrl.pathname !== '/') {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     return NextResponse.redirect(url)
