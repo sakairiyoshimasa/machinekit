@@ -8,7 +8,7 @@ import DiaryEditor from '@/components/DiaryEditor'
 import { ChatMessage, Mood } from '@/types'
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, MessageCircle, BookOpen } from 'lucide-react'
 import Link from 'next/link'
 
 export default function NewDiaryPage() {
@@ -21,10 +21,12 @@ export default function NewDiaryPage() {
   const [editorTitle, setEditorTitle] = useState('')
   const [editorContent, setEditorContent] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [activeTab, setActiveTab] = useState<'chat' | 'editor'>('chat')
 
   const handleGenerateDiary = (content: string, title: string) => {
     setEditorTitle(title)
     setEditorContent(content)
+    setActiveTab('editor')
   }
 
   const handleSave = async ({
@@ -79,20 +81,54 @@ export default function NewDiaryPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" style={{ height: 'calc(100vh - 100px)' }}>
-          <AIChatPanel
-            messages={messages}
-            onMessagesChange={setMessages}
-            onGenerateDiary={handleGenerateDiary}
-            date={todayLabel}
-          />
-          <DiaryEditor
-            initialTitle={editorTitle}
-            initialContent={editorContent}
-            date={todayLabel}
-            onSave={handleSave}
-            isSaving={isSaving}
-          />
+        {/* モバイル用タブ */}
+        <div className="flex lg:hidden mb-3 bg-white rounded-xl border border-gray-200 p-1 gap-1">
+          <button
+            onClick={() => setActiveTab('chat')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === 'chat'
+                ? 'bg-amber-500 text-white'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <MessageCircle className="w-4 h-4" />
+            AIと話す
+          </button>
+          <button
+            onClick={() => setActiveTab('editor')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === 'editor'
+                ? 'bg-amber-500 text-white'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" />
+            日記を書く
+            {editorContent && activeTab !== 'editor' && (
+              <span className="w-2 h-2 bg-green-400 rounded-full" />
+            )}
+          </button>
+        </div>
+
+        {/* PC: 2カラム / モバイル: タブ切り替え */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" style={{ height: 'calc(100vh - 130px)' }}>
+          <div className={`${activeTab === 'chat' ? 'block' : 'hidden'} lg:block h-full`}>
+            <AIChatPanel
+              messages={messages}
+              onMessagesChange={setMessages}
+              onGenerateDiary={handleGenerateDiary}
+              date={todayLabel}
+            />
+          </div>
+          <div className={`${activeTab === 'editor' ? 'block' : 'hidden'} lg:block h-full`}>
+            <DiaryEditor
+              initialTitle={editorTitle}
+              initialContent={editorContent}
+              date={todayLabel}
+              onSave={handleSave}
+              isSaving={isSaving}
+            />
+          </div>
         </div>
       </div>
     </div>
