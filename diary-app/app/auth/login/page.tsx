@@ -8,9 +8,7 @@ import { BookOpen } from 'lucide-react'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const router = useRouter()
   const supabase = createClient()
@@ -19,32 +17,13 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    setMessage('')
 
-    if (isSignUp) {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${location.origin}/auth/callback`,
-        },
-      })
-      if (error) {
-        setError(error.message)
-      } else {
-        setMessage('確認メールを送信しました。メールをご確認ください。')
-      }
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      setError('メールアドレスまたはパスワードが正しくありません')
     } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      if (error) {
-        setError('メールアドレスまたはパスワードが正しくありません')
-      } else {
-        router.push('/diary')
-        router.refresh()
-      }
+      router.push('/diary')
+      router.refresh()
     }
     setLoading(false)
   }
@@ -56,7 +35,7 @@ export default function LoginPage() {
           <div className="bg-amber-100 p-3 rounded-full mb-3">
             <BookOpen className="w-8 h-8 text-amber-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">AI日記</h1>
+          <h1 className="text-2xl font-bold text-gray-800">дневник на двоих</h1>
           <p className="text-gray-500 text-sm mt-1">
             AIと話しながら日記を書こう
           </p>
@@ -96,35 +75,15 @@ export default function LoginPage() {
               {error}
             </p>
           )}
-          {message && (
-            <p className="text-green-600 text-sm bg-green-50 rounded-lg p-3">
-              {message}
-            </p>
-          )}
 
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-medium py-2.5 rounded-lg transition-colors"
           >
-            {loading ? '処理中...' : isSignUp ? 'アカウント作成' : 'ログイン'}
+            {loading ? '処理中...' : 'ログイン'}
           </button>
         </form>
-
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => {
-              setIsSignUp(!isSignUp)
-              setError('')
-              setMessage('')
-            }}
-            className="text-amber-600 hover:text-amber-700 text-sm"
-          >
-            {isSignUp
-              ? 'すでにアカウントをお持ちの方はこちら'
-              : 'アカウントをお持ちでない方はこちら'}
-          </button>
-        </div>
       </div>
     </div>
   )
