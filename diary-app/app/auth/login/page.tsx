@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { BookOpen } from 'lucide-react'
+import Link from 'next/link'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -36,9 +37,12 @@ export default function LoginPage() {
             <BookOpen className="w-8 h-8 text-amber-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-800">дневник на двоих</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            AIと話しながら日記を書こう
-          </p>
+          <Link
+            href="/help"
+            className="text-amber-600 hover:text-amber-700 text-xs mt-2"
+          >
+            この日記の使いかた
+          </Link>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
