@@ -20,6 +20,7 @@ export default function AIChatPanel({
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [generateError, setGenerateError] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -103,35 +104,47 @@ export default function AIChatPanel({
   const handleGenerateDiary = async () => {
     if (messages.length < 2) return
     setIsGenerating(true)
+    setGenerateError('')
 
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages, mode: 'generate', date }),
-    })
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, mode: 'generate', date }),
+      })
 
-    if (!response.ok) {
-      setIsGenerating(false)
-      return
-    }
-
-    const reader = response.body?.getReader()
-    const decoder = new TextDecoder()
-    let generated = ''
-
-    if (reader) {
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        generated += decoder.decode(value, { stream: true })
+      if (!response.ok) {
+        setGenerateError('日記の生成に失敗しました。もう一度お試しください。')
+        setIsGenerating(false)
+        return
       }
+
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      let generated = ''
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          generated += decoder.decode(value, { stream: true })
+        }
+      }
+
+      if (!generated.trim()) {
+        setGenerateError('日記の生成に失敗しました。もう一度お試しください。')
+        setIsGenerating(false)
+        return
+      }
+
+      const titleMatch = generated.match(/タイトル[：:]\s*(.+)/)
+      const title = titleMatch ? titleMatch[1].trim() : '今日の日記'
+      const content = generated.replace(/タイトル[：:].+\n?/, '').trim()
+
+      onGenerateDiary(content, title)
+    } catch {
+      setGenerateError('通信エラーが発生しました。もう一度お試しください。')
     }
-
-    const titleMatch = generated.match(/タイトル[：:]\s*(.+)/)
-    const title = titleMatch ? titleMatch[1].trim() : '今日の日記'
-    const content = generated.replace(/タイトル[：:].+\n?/, '').trim()
-
-    onGenerateDiary(content, title)
     setIsGenerating(false)
   }
 
@@ -182,7 +195,10 @@ export default function AIChatPanel({
       </div>
 
       {messages.length >= 2 && (
-        <div className="px-4 py-2 border-t border-gray-100">
+        <div className="px-4 py-2 border-t border-gray-100 space-y-2">
+          {generateError && (
+            <p className="text-red-500 text-xs text-center bg-red-50 rounded-lg py-2 px-3">{generateError}</p>
+          )}
           <button
             onClick={handleGenerateDiary}
             disabled={isGenerating}
