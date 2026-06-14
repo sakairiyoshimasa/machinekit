@@ -46,7 +46,7 @@ export default function NewDiaryPage() {
       .from('diary_entries')
       .insert({
         user_id: user.id,
-        title: title || '無題',
+        title: title || todayLabel,
         content,
         mood,
         date: today,

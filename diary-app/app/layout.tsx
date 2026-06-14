@@ -8,7 +8,7 @@ const geist = Geist({
 })
 
 export const metadata: Metadata = {
-  title: 'AI日記',
+  title: 'дневник на двоих',
   description: 'AIと話しながら日記を書くアプリ',
   manifest: '/manifest.json',
 }

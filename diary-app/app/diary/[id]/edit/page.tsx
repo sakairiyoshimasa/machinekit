@@ -42,7 +42,7 @@ export default function EditDiaryPage() {
     setIsSaving(true)
     const { error } = await supabase
       .from('diary_entries')
-      .update({ title: title || '無題', content, mood, is_public: isPublic, updated_at: new Date().toISOString() })
+      .update({ title: title || formattedDate, content, mood, is_public: isPublic, updated_at: new Date().toISOString() })
       .eq('id', id)
 
     if (!error) {

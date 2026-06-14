@@ -36,7 +36,7 @@ export default async function DiaryListPage() {
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-amber-500" />
-            <h1 className="font-bold text-gray-800">AI日記</h1>
+            <h1 className="font-bold text-gray-800">дневник на двоих</h1>
           </div>
           <div className="flex items-center gap-2">
             <Link
