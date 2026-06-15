@@ -46,6 +46,21 @@ export async function POST(request: NextRequest) {
 
 まずは「今日はどんな一日でしたか？」などの自然な質問から始めてください。`
 
+    // 生成モードは一括取得（モバイルのストリーミング不安定対策）
+    if (mode === 'generate') {
+      const response = await client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2048,
+        system: systemPrompt,
+        messages: messages.map(m => ({
+          role: m.role,
+          content: m.content,
+        })),
+      })
+      const text = response.content[0].type === 'text' ? response.content[0].text : ''
+      return NextResponse.json({ text })
+    }
+
     const stream = await client.messages.stream({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 2048,

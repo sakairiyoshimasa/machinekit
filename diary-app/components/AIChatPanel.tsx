@@ -119,17 +119,8 @@ export default function AIChatPanel({
         return
       }
 
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
-      let generated = ''
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          generated += decoder.decode(value, { stream: true })
-        }
-      }
+      const data = await response.json()
+      const generated = data.text || ''
 
       if (!generated.trim()) {
         setGenerateError('日記の生成に失敗しました。もう一度お試しください。')
