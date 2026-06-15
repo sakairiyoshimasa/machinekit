@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import DiaryCard from '@/components/DiaryCard'
 import { DiaryEntry } from '@/types'
@@ -13,7 +14,9 @@ export default async function DiaryListPage() {
 
   if (!user) redirect('/auth/login')
 
-  const { data: myProfile } = await supabase
+  const admin = createAdminClient()
+
+  const { data: myProfile } = await admin
     .from('profiles')
     .select('is_owner, group_code')
     .eq('id', user.id)
@@ -21,7 +24,7 @@ export default async function DiaryListPage() {
 
   let pendingCount = 0
   if (myProfile?.is_owner) {
-    const { count } = await supabase
+    const { count } = await admin
       .from('profiles')
       .select('*', { count: 'exact', head: true })
       .eq('group_code', myProfile.group_code)
@@ -29,7 +32,7 @@ export default async function DiaryListPage() {
     pendingCount = count ?? 0
   }
 
-  const { data: entries } = await supabase
+  const { data: entries } = await admin
     .from('diary_entries')
     .select('*')
     .eq('user_id', user.id)
