@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Globe, Lock } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 
 interface PublicToggleProps {
   entryId: string
@@ -12,15 +11,15 @@ interface PublicToggleProps {
 export default function PublicToggle({ entryId, initialIsPublic }: PublicToggleProps) {
   const [isPublic, setIsPublic] = useState(initialIsPublic)
   const [loading, setLoading] = useState(false)
-  const supabase = createClient()
 
   const toggle = async () => {
     setLoading(true)
-    const { error } = await supabase
-      .from('diary_entries')
-      .update({ is_public: !isPublic })
-      .eq('id', entryId)
-    if (!error) setIsPublic(v => !v)
+    const res = await fetch(`/api/diary/${entryId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_public: !isPublic }),
+    })
+    if (res.ok) setIsPublic(v => !v)
     setLoading(false)
   }
 

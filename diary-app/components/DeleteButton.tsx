@@ -2,23 +2,17 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Trash2, Loader2 } from 'lucide-react'
 
 export default function DeleteButton({ entryId }: { entryId: string }) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   const handleDelete = async () => {
     setIsDeleting(true)
-    const { error } = await supabase
-      .from('diary_entries')
-      .delete()
-      .eq('id', entryId)
-
-    if (!error) {
+    const res = await fetch(`/api/diary/${entryId}`, { method: 'DELETE' })
+    if (res.ok) {
       router.push('/diary')
       router.refresh()
     } else {

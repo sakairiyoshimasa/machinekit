@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect, notFound } from 'next/navigation'
 import { DiaryEntry, Mood, MOOD_EMOJI, MOOD_LABELS } from '@/types'
 import { format } from 'date-fns'
@@ -20,7 +21,8 @@ export default async function DiaryDetailPage({
 
   if (!user) redirect('/auth/login')
 
-  const { data: entry } = await supabase
+  const admin = createAdminClient()
+  const { data: entry } = await admin
     .from('diary_entries')
     .select('*')
     .eq('id', id)
