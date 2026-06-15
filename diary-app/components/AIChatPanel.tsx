@@ -114,7 +114,12 @@ export default function AIChatPanel({
       })
 
       if (!response.ok) {
-        setGenerateError('日記の生成に失敗しました。もう一度お試しください。')
+        let detail = `(${response.status})`
+        try {
+          const errData = await response.json()
+          if (errData.error) detail = errData.error
+        } catch { /* ignore */ }
+        setGenerateError(`生成に失敗しました: ${detail}`)
         setIsGenerating(false)
         return
       }
@@ -123,7 +128,7 @@ export default function AIChatPanel({
       const generated = data.text || ''
 
       if (!generated.trim()) {
-        setGenerateError('日記の生成に失敗しました。もう一度お試しください。')
+        setGenerateError('生成に失敗しました: レスポンスが空でした')
         setIsGenerating(false)
         return
       }
@@ -133,8 +138,9 @@ export default function AIChatPanel({
       const content = generated.replace(/タイトル[：:].+\n?/, '').trim()
 
       onGenerateDiary(content, title)
-    } catch {
-      setGenerateError('通信エラーが発生しました。もう一度お試しください。')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setGenerateError(`通信エラー: ${msg}`)
     }
     setIsGenerating(false)
   }
