@@ -46,16 +46,37 @@ export async function POST(request: NextRequest) {
 
 まずは「今日はどんな一日でしたか？」などの自然な質問から始めてください。`
 
-    // 生成モードは一括取得（モバイルのストリーミング不安定対策）
+    // 生成モードはユーザーの発言だけを抽出して渡す
     if (mode === 'generate') {
+      const userMessages = messages
+        .filter(m => m.role === 'user')
+        .map((m, i) => `【${i + 1}】${m.content}`)
+        .join('\n')
+
+      const generatePrompt = `あなたは日記ライターのアシスタントです。以下はユーザーが今日話してくれた内容です。この内容だけをもとに、${date ? `${date}の` : ''}日記を日本語で作成してください。
+
+【ユーザーが話した内容】
+${userMessages}
+
+日記を書く際のルール：
+- 一人称（今日は、私は、など）で書く
+- 感情や気持ちを丁寧に表現する
+- 出来事を自然な流れで描写する
+- 読み返したときに当時の気持ちが蘇るような文章にする
+- 800〜1200文字程度でしっかり書く
+- 上記の【ユーザーが話した内容】以外のことは書かない
+- 前置きや導入文は不要。タイトルから直接始める
+
+出力形式：
+タイトル：（タイトル）
+
+（日記本文）`
+
       const response = await client.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 2048,
-        system: systemPrompt,
-        messages: messages.map(m => ({
-          role: m.role,
-          content: m.content,
-        })),
+        system: generatePrompt,
+        messages: [{ role: 'user', content: '日記を作成してください。' }],
       })
       const text = response.content[0].type === 'text' ? response.content[0].text : ''
       return NextResponse.json({ text })
