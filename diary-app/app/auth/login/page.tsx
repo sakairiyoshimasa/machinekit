@@ -9,7 +9,7 @@ import Link from 'next/link'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [inviteCode, setInviteCode] = useState('')
+  const [groupCode, setGroupCode] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -27,13 +27,16 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, inviteCode }),
+        body: JSON.stringify({ email, password, groupCode }),
       })
       const data = await res.json()
       if (!res.ok) {
         setError(data.error)
+      } else if (data.newGroup) {
+        setMessage('アカウントを作成しました。ログインしてください。')
+        setIsSignUp(false)
       } else {
-        setMessage('確認メールを送信しました。メールをご確認ください。')
+        setMessage('登録しました。パスフレーズのオーナーの承認をお待ちください。')
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -86,15 +89,18 @@ export default function LoginPage() {
           </div>
           {isSignUp && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">招待コード</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">パスフレーズ</label>
               <input
                 type="text"
-                value={inviteCode}
-                onChange={e => setInviteCode(e.target.value)}
+                value={groupCode}
+                onChange={e => setGroupCode(e.target.value)}
                 required
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                placeholder="招待コードを入力"
+                placeholder="パスフレーズを入力"
               />
+              <p className="text-xs text-gray-400 mt-1">
+                新しいパスフレーズで登録するとグループオーナーになります。既存のパスフレーズを入力するとオーナーの承認が必要です。
+              </p>
             </div>
           )}
 

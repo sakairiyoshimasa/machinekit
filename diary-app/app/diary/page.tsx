@@ -5,13 +5,29 @@ import { DiaryEntry } from '@/types'
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import Link from 'next/link'
-import { PenLine, BookOpen, LogOut, Users } from 'lucide-react'
+import { PenLine, BookOpen, LogOut, Users, Bell } from 'lucide-react'
 
 export default async function DiaryListPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/auth/login')
+
+  const { data: myProfile } = await supabase
+    .from('profiles')
+    .select('is_owner, group_code')
+    .eq('id', user.id)
+    .single()
+
+  let pendingCount = 0
+  if (myProfile?.is_owner) {
+    const { count } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('group_code', myProfile.group_code)
+      .eq('status', 'pending')
+    pendingCount = count ?? 0
+  }
 
   const { data: entries } = await supabase
     .from('diary_entries')
@@ -39,6 +55,23 @@ export default async function DiaryListPage() {
             <h1 className="font-bold text-gray-800">дневник на двоих</h1>
           </div>
           <div className="flex items-center gap-2">
+            {myProfile?.is_owner && (
+              <Link
+                href="/approve"
+                className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border transition-all ${
+                  pendingCount > 0
+                    ? 'text-amber-600 border-amber-300 bg-amber-50 hover:bg-amber-100'
+                    : 'text-gray-400 border-gray-200 hover:text-gray-600'
+                }`}
+              >
+                <Bell className="w-3.5 h-3.5" />
+                {pendingCount > 0 && (
+                  <span className="bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                    {pendingCount}
+                  </span>
+                )}
+              </Link>
+            )}
             <Link
               href="/feed"
               className="flex items-center gap-1.5 text-gray-500 hover:text-gray-700 text-sm px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 transition-all"

@@ -1,3 +1,12 @@
+export interface Profile {
+  id: string
+  email: string
+  group_code: string
+  is_owner: boolean
+  status: 'pending' | 'approved'
+  created_at: string
+}
+
 export interface DiaryEntry {
   id: string
   user_id: string

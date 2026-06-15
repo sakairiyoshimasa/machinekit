@@ -30,11 +30,26 @@ export async function middleware(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
   const isApiRoute = request.nextUrl.pathname.startsWith('/api')
   const isPublicPage = request.nextUrl.pathname === '/help'
+  const isPendingPage = request.nextUrl.pathname === '/pending'
 
   if (!user && !isAuthPage && !isApiRoute && !isPublicPage && request.nextUrl.pathname !== '/') {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     return NextResponse.redirect(url)
+  }
+
+  if (user && !isAuthPage && !isApiRoute && !isPublicPage && !isPendingPage) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('status')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || profile.status === 'pending') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/pending'
+      return NextResponse.redirect(url)
+    }
   }
 
   if (user && isAuthPage) {
