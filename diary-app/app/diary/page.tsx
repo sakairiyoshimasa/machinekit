@@ -5,7 +5,7 @@ import { DiaryEntry } from '@/types'
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import Link from 'next/link'
-import { PenLine, BookOpen, LogOut, Users, Bell } from 'lucide-react'
+import { PenLine, BookOpen, LogOut, Users, Bell, Settings } from 'lucide-react'
 
 export default async function DiaryListPage() {
   const supabase = await createClient()
@@ -55,6 +55,15 @@ export default async function DiaryListPage() {
             <h1 className="font-bold text-gray-800">дневник на двоих</h1>
           </div>
           <div className="flex items-center gap-2">
+            {myProfile?.is_owner && (
+              <Link
+                href="/settings"
+                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg transition-colors"
+                title="設定"
+              >
+                <Settings className="w-4 h-4" />
+              </Link>
+            )}
             {myProfile?.is_owner && (
               <Link
                 href="/approve"

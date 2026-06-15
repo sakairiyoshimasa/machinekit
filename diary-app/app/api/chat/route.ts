@@ -8,6 +8,19 @@ const client = new Anthropic()
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if AI chat is enabled
+    const { createClient } = await import('@/lib/supabase/server')
+    const supabase = await createClient()
+    const { data: setting } = await supabase
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'ai_chat_enabled')
+      .single()
+
+    if (setting?.value === 'false') {
+      return NextResponse.json({ error: 'AI機能は現在停止中です' }, { status: 503 })
+    }
+
     const { messages, mode, date }: {
       messages: ChatMessage[]
       mode: 'chat' | 'generate'

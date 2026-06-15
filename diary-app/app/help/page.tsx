@@ -10,23 +10,27 @@ export default function HelpPage() {
         <ul className="space-y-4 text-sm text-gray-700">
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            日記の内容は記事ごとに公開・非公開が選べます。
+            登録時に自分でパスフレーズを決めます。新しいパスフレーズで登録するとグループのオーナーになります。
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            デフォルトは非公開です。
+            同じパスフレーズで登録したい人がいる場合、オーナーが承認することで参加できます。1グループ最大2名です。
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            公開にすると、利用者全員に公開されます。
+            日記は記事ごとに公開・非公開が選べます。デフォルトは非公開です。
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            Claudeとのチャットを日記に要約することができます。
+            公開にすると、同じグループのメンバーだけに見えます。グループ外には公開されません。
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            チャットしなくても日記は書けます。
+            AIと会話しながら日記を生成することができます。チャットしなくても日記は書けます。
+          </li>
+          <li className="flex gap-2">
+            <span className="text-amber-500 mt-0.5">•</span>
+            通知機能はありません。お互いのペースで書いて、読んでください。
           </li>
         </ul>
 
