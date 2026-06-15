@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import AIChatPanel from '@/components/AIChatPanel'
 import DiaryEditor from '@/components/DiaryEditor'
 import { ChatMessage, Mood } from '@/types'
@@ -13,7 +12,6 @@ import Link from 'next/link'
 
 export default function NewDiaryClient({ aiEnabled }: { aiEnabled: boolean }) {
   const router = useRouter()
-  const supabase = createClient()
   const today = format(new Date(), 'yyyy-MM-dd')
   const todayLabel = format(new Date(), 'yyyy年M月d日(E)', { locale: ja })
 
@@ -41,26 +39,22 @@ export default function NewDiaryClient({ aiEnabled }: { aiEnabled: boolean }) {
     isPublic: boolean
   }) => {
     setIsSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { data, error } = await supabase
-      .from('diary_entries')
-      .insert({
-        user_id: user.id,
+    const res = await fetch('/api/diary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         title: title || todayLabel,
         content,
         mood,
         date: today,
         is_public: isPublic,
-      })
-      .select()
-      .single()
-
-    if (!error && data) {
+      }),
+    })
+    const data = await res.json()
+    if (res.ok && data.id) {
       router.push(`/diary/${data.id}`)
     } else {
-      console.error('Save error:', error)
+      console.error('Save error:', data)
       setIsSaving(false)
     }
   }
