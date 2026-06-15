@@ -7,13 +7,7 @@ export default async function SettingsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_owner')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.is_owner) redirect('/diary')
+  if (user.email !== 'sakairi.y@gmail.com') redirect('/diary')
 
   const { data: settings } = await supabase
     .from('system_settings')

@@ -15,13 +15,9 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '未認証' }, { status: 401 })
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_owner')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.is_owner) return NextResponse.json({ error: '権限がありません' }, { status: 403 })
+  if (user.email !== 'sakairi.y@gmail.com') {
+    return NextResponse.json({ error: '権限がありません' }, { status: 403 })
+  }
 
   const { key, value } = await request.json()
   const admin = createAdminClient()
