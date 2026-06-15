@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '未認証' }, { status: 401 })
 
-  if (user.email !== 'sakairi.y@gmail.com') {
+  if (user.email !== '3333449@pm.me') {
     return NextResponse.json({ error: '権限がありません' }, { status: 403 })
   }
 
