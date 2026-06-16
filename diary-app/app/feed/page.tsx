@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { DiaryEntry, Mood, MOOD_EMOJI } from '@/types'
 import { format } from 'date-fns'
@@ -12,7 +13,8 @@ export default async function FeedPage() {
 
   if (!user) redirect('/auth/login')
 
-  const { data: entries } = await supabase
+  const admin = createAdminClient()
+  const { data: entries } = await admin
     .from('diary_entries')
     .select('*')
     .eq('is_public', true)
