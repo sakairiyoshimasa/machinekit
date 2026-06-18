@@ -14,15 +14,15 @@ export default function HelpPage() {
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            同じパスフレーズで登録したい人がいる場合、オーナーが承認することで参加できます。1グループ最大2名です。
+            誰かを招待したいときは、アカウント設定のQRコードを見せてください。スキャンするとパスフレーズが自動入力された登録画面が開きます。
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            日記は記事ごとに公開・非公開が選べます。デフォルトは非公開です。
+            同じパスフレーズで登録するとオーナーの承認が必要です。1グループ最大2名まで参加できます。
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            公開にすると、同じグループのメンバーだけに見えます。グループ外には公開されません。
+            日記は記事ごとに公開・非公開が選べます。デフォルトは非公開です。公開にすると同じグループのメンバーだけに見えます。グループ外には公開されません。
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
