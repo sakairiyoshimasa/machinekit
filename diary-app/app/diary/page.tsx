@@ -6,7 +6,9 @@ import { DiaryEntry } from '@/types'
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import Link from 'next/link'
-import { PenLine, BookOpen, LogOut, Users, Bell, Settings, UserCircle } from 'lucide-react'
+import { PenLine, BookOpen, LogOut, Users, Bell, Settings, UserCircle, ShieldCheck } from 'lucide-react'
+
+const ADMIN_EMAIL = '3333449@pm.me'
 
 export default async function DiaryListPage() {
   const supabase = await createClient()
@@ -98,6 +100,15 @@ export default async function DiaryListPage() {
               <PenLine className="w-3.5 h-3.5" />
               新しい日記
             </Link>
+            {user.email === ADMIN_EMAIL && (
+              <Link
+                href="/admin"
+                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg transition-colors"
+                title="管理パネル"
+              >
+                <ShieldCheck className="w-4 h-4" />
+              </Link>
+            )}
             <Link
               href="/account"
               className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg transition-colors"
