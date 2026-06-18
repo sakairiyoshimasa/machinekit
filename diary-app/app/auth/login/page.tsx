@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { BookOpen } from 'lucide-react'
@@ -11,6 +11,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [groupCode, setGroupCode] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const passphrase = params.get('passphrase')
+    if (passphrase) {
+      setGroupCode(passphrase)
+      setIsSignUp(true)
+    }
+  }, [])
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')

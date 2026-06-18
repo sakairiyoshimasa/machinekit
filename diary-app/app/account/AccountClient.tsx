@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, KeyRound, Loader2, Check } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
+import { ArrowLeft, KeyRound, Loader2, Check, QrCode, Copy } from 'lucide-react'
 
 interface Props {
   email: string
@@ -11,12 +12,27 @@ interface Props {
   isOwner: boolean
 }
 
-export default function AccountClient({ email, groupCode, isOwner }: Props) {
+export default function AccountClient({ email, groupCode: initialGroupCode, isOwner }: Props) {
   const router = useRouter()
+  const [groupCode, setGroupCode] = useState(initialGroupCode)
   const [newPassphrase, setNewPassphrase] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [origin, setOrigin] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    setOrigin(window.location.origin)
+  }, [])
+
+  const inviteUrl = origin ? `${origin}/auth/login?passphrase=${encodeURIComponent(groupCode)}` : ''
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(inviteUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,6 +49,7 @@ export default function AccountClient({ email, groupCode, isOwner }: Props) {
 
     if (res.ok) {
       setSuccess(true)
+      setGroupCode(newPassphrase.trim())
       setNewPassphrase('')
       router.refresh()
     } else {
@@ -70,6 +87,50 @@ export default function AccountClient({ email, groupCode, isOwner }: Props) {
             </div>
           </div>
         </div>
+
+        {isOwner && (
+          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            <div className="flex items-center gap-2 mb-1">
+              <QrCode className="w-4 h-4 text-gray-400" />
+              <h2 className="text-sm font-semibold text-gray-500">招待QRコード</h2>
+            </div>
+            <p className="text-xs text-gray-400 mb-5">
+              スキャンするとパスフレーズが自動入力された登録画面が開きます
+            </p>
+            {inviteUrl ? (
+              <div className="flex flex-col items-center gap-4">
+                <div className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
+                  <QRCodeSVG
+                    value={inviteUrl}
+                    size={180}
+                    bgColor="#ffffff"
+                    fgColor="#1f2937"
+                    level="M"
+                  />
+                </div>
+                <div className="w-full flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={inviteUrl}
+                    className="flex-1 text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 outline-none truncate"
+                  />
+                  <button
+                    onClick={handleCopy}
+                    className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg border border-gray-200 hover:border-amber-300 text-gray-500 hover:text-amber-600 transition-all whitespace-nowrap"
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copied ? 'コピー済み' : 'コピー'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-6 h-6 text-gray-300 animate-spin" />
+              </div>
+            )}
+          </div>
+        )}
 
         {isOwner && (
           <div className="bg-white rounded-2xl border border-gray-200 p-6">
