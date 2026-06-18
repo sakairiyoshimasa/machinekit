@@ -18,11 +18,11 @@ export default function HelpPage() {
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            同じパスフレーズで登録するとオーナーの承認が必要です。1グループ最大2名まで参加できます。
+            同じパスフレーズで登録するとグループとなり、公開に設定した日記だけがお互いに閲覧できます。グループは最大2名で、参加にはオーナーの承認が必要です。
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            日記は記事ごとに公開・非公開が選べます。デフォルトは非公開です。公開にすると同じグループのメンバーだけに見えます。グループ外には公開されません。
+            日記は記事ごとに公開・非公開が選べます。デフォルトは非公開です。公開にしてもグループ外や未登録のユーザーには見えません。外部への公開機能はありません。
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
