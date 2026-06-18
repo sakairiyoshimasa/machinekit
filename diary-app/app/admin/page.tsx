@@ -28,7 +28,7 @@ export default async function AdminPage() {
   // group_codeでグループ化
   const groups = (profiles ?? []).reduce((acc, p) => {
     if (!acc[p.group_code]) acc[p.group_code] = []
-    acc[p.group_code].push(p)
+    acc[p.group_code]!.push(p)
     return acc
   }, {} as Record<string, typeof profiles>)
 
