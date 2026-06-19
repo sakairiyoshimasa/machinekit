@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Lock, Users, Loader2, Check, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, Lock, Users, Loader2, Check, Eye, EyeOff, KeyRound } from 'lucide-react'
 import { useEncryption } from '@/contexts/EncryptionContext'
 import { encrypt, decrypt, deriveKey, storeKey, isEncrypted } from '@/lib/crypto'
 import UnlockBanner from '@/components/UnlockBanner'
@@ -12,9 +12,10 @@ interface Props {
   myPublicSlot: string | null
   partnerSlot: string | null
   partnerUserId: string | null
+  encryptedSample: string | null
 }
 
-export default function AccountClient({ email, myPublicSlot, partnerSlot, partnerUserId: initialPartnerUserId }: Props) {
+export default function AccountClient({ email, myPublicSlot, partnerSlot, partnerUserId: initialPartnerUserId, encryptedSample }: Props) {
   const { privateKey, applyPublicKeys } = useEncryption()
 
   const [myPublicPassword, setMyPublicPassword] = useState('')
@@ -30,6 +31,14 @@ export default function AccountClient({ email, myPublicSlot, partnerSlot, partne
   const [partnerError, setPartnerError] = useState('')
   const [showPartnerPassword, setShowPartnerPassword] = useState(false)
   const [currentPartnerUserId, setCurrentPartnerUserId] = useState(initialPartnerUserId)
+
+  const [oldPrivatePassword, setOldPrivatePassword] = useState('')
+  const [newPrivatePassword, setNewPrivatePassword] = useState('')
+  const [newPrivateConfirm, setNewPrivateConfirm] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [changePasswordError, setChangePasswordError] = useState('')
+  const [changePasswordDone, setChangePasswordDone] = useState(false)
+  const [reencryptProgress, setReencryptProgress] = useState('')
 
   const hasMyPublicSlot = !!myPublicSlot
   const hasPartnerSlot = !!partnerSlot && !!currentPartnerUserId
@@ -107,6 +116,96 @@ export default function AccountClient({ email, myPublicSlot, partnerSlot, partne
     }
   }
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setChangePasswordError('')
+    if (newPrivatePassword !== newPrivateConfirm) {
+      setChangePasswordError('新しいパスワードが一致しません')
+      return
+    }
+    if (newPrivatePassword === oldPrivatePassword) {
+      setChangePasswordError('新旧パスワードが同じです')
+      return
+    }
+    setChangingPassword(true)
+    try {
+      // 1. 旧鍵を検証
+      const oldKey = await deriveKey(oldPrivatePassword, 'private')
+      if (encryptedSample && isEncrypted(encryptedSample)) {
+        try {
+          await decrypt(encryptedSample, oldKey)
+        } catch {
+          throw new Error('現在のパスワードが違います')
+        }
+      }
+
+      // 2. 新鍵を生成
+      const newKey = await deriveKey(newPrivatePassword, 'private')
+
+      // 3. 全日記を取得して非公開エントリーを再暗号化
+      setReencryptProgress('日記を取得中...')
+      const entriesRes = await fetch('/api/diary')
+      if (!entriesRes.ok) throw new Error('日記の取得に失敗しました')
+      const entries: Array<{ id: string; title: string | null; content: string | null; is_public: boolean }> = await entriesRes.json()
+
+      const privateEntries = entries.filter(e => !e.is_public && (isEncrypted(e.title) || isEncrypted(e.content)))
+      let done = 0
+      for (const entry of privateEntries) {
+        setReencryptProgress(`再暗号化中... ${done + 1}/${privateEntries.length}件`)
+        const newTitle = isEncrypted(entry.title)
+          ? await encrypt(await decrypt(entry.title!, oldKey), newKey)
+          : entry.title
+        const newContent = isEncrypted(entry.content)
+          ? await encrypt(await decrypt(entry.content!, oldKey), newKey)
+          : entry.content
+        const res = await fetch(`/api/diary/${entry.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: newTitle, content: newContent }),
+        })
+        if (!res.ok) throw new Error(`日記ID ${entry.id} の更新に失敗しました`)
+        done++
+      }
+
+      // 4. スロットを再暗号化
+      setReencryptProgress('スロットを更新中...')
+      const slotsRes = await fetch('/api/account/slots')
+      const { myPublicSlot: currentMySlot, partnerSlot: currentPartnerSlot, partnerUserId: pid } = await slotsRes.json()
+      const slotUpdates: Record<string, string | null> = {}
+
+      if (currentMySlot && isEncrypted(currentMySlot)) {
+        const pubPw = await decrypt(currentMySlot, oldKey)
+        slotUpdates.myPublicSlot = await encrypt(pubPw, newKey)
+      }
+      if (currentPartnerSlot && isEncrypted(currentPartnerSlot)) {
+        const partnerPw = await decrypt(currentPartnerSlot, oldKey)
+        slotUpdates.partnerSlot = await encrypt(partnerPw, newKey)
+      }
+      if (Object.keys(slotUpdates).length > 0) {
+        await fetch('/api/account/slots', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(slotUpdates),
+        })
+      }
+
+      // 5. セッション更新
+      await storeKey('private', newKey)
+      applyPublicKeys(null, null, pid)
+
+      setChangePasswordDone(true)
+      setOldPrivatePassword('')
+      setNewPrivatePassword('')
+      setNewPrivateConfirm('')
+      setReencryptProgress('')
+      setTimeout(() => setChangePasswordDone(false), 4000)
+    } catch (err) {
+      setChangePasswordError(err instanceof Error ? err.message : '変更に失敗しました')
+      setReencryptProgress('')
+    }
+    setChangingPassword(false)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
@@ -124,7 +223,7 @@ export default function AccountClient({ email, myPublicSlot, partnerSlot, partne
           <p className="text-gray-700 text-sm">{email}</p>
         </div>
 
-        <UnlockBanner />
+        <UnlockBanner sample={encryptedSample ?? undefined} />
 
         {privateKey && (
           <>
@@ -210,6 +309,54 @@ export default function AccountClient({ email, myPublicSlot, partnerSlot, partne
                   登録を解除する
                 </button>
               )}
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 p-6">
+              <div className="flex items-center gap-2 mb-1">
+                <KeyRound className="w-4 h-4 text-gray-500" />
+                <h2 className="text-sm font-semibold text-gray-700">非公開パスワードを変更</h2>
+              </div>
+              <p className="text-xs text-gray-400 mb-4">
+                変更すると全ての非公開日記とスロットが新しいパスワードで再暗号化されます。処理中はページを閉じないでください。
+              </p>
+              <form onSubmit={handleChangePassword} className="space-y-3">
+                <input
+                  type="password"
+                  value={oldPrivatePassword}
+                  onChange={e => setOldPrivatePassword(e.target.value)}
+                  placeholder="現在のパスワード"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-gray-400"
+                  required
+                />
+                <input
+                  type="password"
+                  value={newPrivatePassword}
+                  onChange={e => setNewPrivatePassword(e.target.value)}
+                  placeholder="新しいパスワード"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-gray-400"
+                  required
+                />
+                <input
+                  type="password"
+                  value={newPrivateConfirm}
+                  onChange={e => setNewPrivateConfirm(e.target.value)}
+                  placeholder="新しいパスワード（確認）"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-gray-400"
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={changingPassword || !oldPrivatePassword || !newPrivatePassword || !newPrivateConfirm}
+                  className="w-full bg-gray-700 hover:bg-gray-800 disabled:opacity-40 text-white text-sm font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  {changingPassword
+                    ? <><Loader2 className="w-4 h-4 animate-spin" />{reencryptProgress || '処理中...'}</>
+                    : changePasswordDone
+                    ? <><Check className="w-4 h-4" />変更しました</>
+                    : 'パスワードを変更する'}
+                </button>
+              </form>
+              {changePasswordError && <p className="text-red-500 text-xs mt-2">{changePasswordError}</p>}
             </div>
           </>
         )}
