@@ -314,20 +314,24 @@ export default function AccountClient({ email, myPublicSlot, partnerSlot, partne
             <div className="bg-white rounded-2xl border border-gray-200 p-6">
               <div className="flex items-center gap-2 mb-1">
                 <KeyRound className="w-4 h-4 text-gray-500" />
-                <h2 className="text-sm font-semibold text-gray-700">非公開パスワードを変更</h2>
+                <h2 className="text-sm font-semibold text-gray-700">非公開パスワードを{encryptedSample ? '変更' : '設定'}</h2>
               </div>
               <p className="text-xs text-gray-400 mb-4">
-                変更すると全ての非公開日記とスロットが新しいパスワードで再暗号化されます。処理中はページを閉じないでください。
+                {encryptedSample
+                  ? '変更すると全ての非公開日記とスロットが新しいパスワードで再暗号化されます。処理中はページを閉じないでください。'
+                  : '非公開日記の暗号化に使います。忘れると日記が読めなくなります。パスワードマネージャーへの保存を推奨します。'}
               </p>
               <form onSubmit={handleChangePassword} className="space-y-3">
-                <input
-                  type="password"
-                  value={oldPrivatePassword}
-                  onChange={e => setOldPrivatePassword(e.target.value)}
-                  placeholder="現在のパスワード"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-gray-400"
-                  required
-                />
+                {encryptedSample && (
+                  <input
+                    type="password"
+                    value={oldPrivatePassword}
+                    onChange={e => setOldPrivatePassword(e.target.value)}
+                    placeholder="現在のパスワード"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-gray-400"
+                    required
+                  />
+                )}
                 <input
                   type="password"
                   value={newPrivatePassword}
@@ -346,7 +350,7 @@ export default function AccountClient({ email, myPublicSlot, partnerSlot, partne
                 />
                 <button
                   type="submit"
-                  disabled={changingPassword || !oldPrivatePassword || !newPrivatePassword || !newPrivateConfirm}
+                  disabled={changingPassword || (!!encryptedSample && !oldPrivatePassword) || !newPrivatePassword || !newPrivateConfirm}
                   className="w-full bg-gray-700 hover:bg-gray-800 disabled:opacity-40 text-white text-sm font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   {changingPassword
