@@ -1,14 +1,8 @@
-'use client'
-
 import Link from 'next/link'
-import { useEncryption } from '@/contexts/EncryptionContext'
 import { Settings } from 'lucide-react'
 
 export default function PublicKeySetupBanner({ hasPublicSlot }: { hasPublicSlot: boolean }) {
-  const { privateKey, myPublicKey } = useEncryption()
-
-  // 非公開キーが解除済み かつ 公開キーが未設定 かつ DBにスロットもない
-  if (!privateKey || myPublicKey !== null || hasPublicSlot) return null
+  if (hasPublicSlot) return null
 
   return (
     <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
