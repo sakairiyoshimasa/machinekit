@@ -26,7 +26,7 @@ export default function HelpPage() {
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            AIと会話しながら日記を生成することができます。チャットしなくても日記は書けます。
+            日記は暗号化パスワードで保護できます。最初の日記を書く前にパスワードを設定すると、内容が暗号化されて保存されます。グループ内で同じパスワードを使ってください。パスワードを忘れると日記が読めなくなります。
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>

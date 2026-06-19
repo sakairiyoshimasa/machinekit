@@ -7,6 +7,8 @@ import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import Link from 'next/link'
 import { PenLine, BookOpen, LogOut, Users, Bell, Settings, UserCircle, ShieldCheck } from 'lucide-react'
+import UnlockBanner from '@/components/UnlockBanner'
+import { isEncrypted } from '@/lib/crypto'
 
 const ADMIN_EMAIL = '3333449@pm.me'
 
@@ -41,7 +43,10 @@ export default async function DiaryListPage() {
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
 
-  const groupedEntries = (entries as DiaryEntry[] | null)?.reduce(
+  const allEntries = (entries as DiaryEntry[] | null) ?? []
+  const encryptedSample = allEntries.find(e => isEncrypted(e.title))?.title
+
+  const groupedEntries = allEntries.reduce(
     (groups, entry) => {
       const monthKey = format(new Date(entry.date + 'T00:00:00'), 'yyyy年M月', { locale: ja })
       if (!groups[monthKey]) groups[monthKey] = []
@@ -130,6 +135,7 @@ export default async function DiaryListPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6">
+        <UnlockBanner sample={encryptedSample} />
         {Object.keys(groupedEntries).length === 0 ? (
           <div className="text-center py-20">
             <div className="bg-amber-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">

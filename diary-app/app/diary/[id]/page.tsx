@@ -1,14 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect, notFound } from 'next/navigation'
-import { DiaryEntry, Mood, MOOD_EMOJI, MOOD_LABELS } from '@/types'
+import { DiaryEntry } from '@/types'
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import Link from 'next/link'
 import { ArrowLeft, Pencil } from 'lucide-react'
 import DeleteButton from '@/components/DeleteButton'
 import PublicToggle from '@/components/PublicToggle'
-import CommentsSection from '@/components/CommentsSection'
+import UnlockBanner from '@/components/UnlockBanner'
+import DiaryDetailContent from './DiaryDetailContent'
+import { isEncrypted } from '@/lib/crypto'
+
 
 export default async function DiaryDetailPage({
   params,
@@ -68,35 +71,13 @@ export default async function DiaryDetailPage({
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8">
-          {!isOwner && (
-            <p className="text-xs text-blue-500 font-medium mb-4">相手の日記</p>
-          )}
-
-          <div className="flex items-center gap-3 mb-6">
-            <div>
-              <p className="text-sm text-gray-400">{formattedDate}</p>
-              {diaryEntry.mood && (
-                <div className="flex items-center gap-1.5 mt-1">
-                  <span className="text-xl">{MOOD_EMOJI[diaryEntry.mood as Mood]}</span>
-                  <span className="text-xs text-gray-400">{MOOD_LABELS[diaryEntry.mood as Mood]}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <h1 className="text-2xl font-bold text-gray-800 mb-6">
-            {diaryEntry.title || '無題'}
-          </h1>
-
-          <div className="text-gray-700 leading-relaxed whitespace-pre-wrap text-sm md:text-base">
-            {diaryEntry.content}
-          </div>
-
-          {diaryEntry.is_public && (
-            <CommentsSection entryId={id} currentUserId={user.id} />
-          )}
-        </div>
+        <UnlockBanner sample={isEncrypted(diaryEntry.title) ? diaryEntry.title ?? undefined : undefined} />
+        <DiaryDetailContent
+          entry={diaryEntry}
+          isOwner={isOwner}
+          currentUserId={user.id}
+          formattedDate={formattedDate}
+        />
       </main>
     </div>
   )

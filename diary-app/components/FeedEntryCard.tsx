@@ -9,7 +9,12 @@ import { Lock } from 'lucide-react'
 import { useEncryption } from '@/contexts/EncryptionContext'
 import { decrypt, isEncrypted } from '@/lib/crypto'
 
-export default function DiaryCard({ entry }: { entry: DiaryEntry }) {
+interface Props {
+  entry: DiaryEntry
+  isOwn: boolean
+}
+
+export default function FeedEntryCard({ entry, isOwn }: Props) {
   const { key } = useEncryption()
   const [title, setTitle] = useState<string | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -46,6 +51,9 @@ export default function DiaryCard({ entry }: { entry: DiaryEntry }) {
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
+              <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${isOwn ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-500'}`}>
+                {isOwn ? 'あなた' : '相手'}
+              </span>
               <span className="text-xs text-gray-400">{formattedDate}</span>
               {entry.mood && <span className="text-base">{MOOD_EMOJI[entry.mood as Mood]}</span>}
             </div>
