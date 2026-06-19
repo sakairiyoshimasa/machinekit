@@ -14,7 +14,7 @@ import UnlockBanner from '@/components/UnlockBanner'
 
 export default function EditDiaryClient({ entry }: { entry: DiaryEntry }) {
   const router = useRouter()
-  const { key } = useEncryption()
+  const { privateKey, myPublicKey } = useEncryption()
   const [isSaving, setIsSaving] = useState(false)
   const [decryptedTitle, setDecryptedTitle] = useState<string | null>(null)
   const [decryptedContent, setDecryptedContent] = useState<string | null>(null)
@@ -24,6 +24,8 @@ export default function EditDiaryClient({ entry }: { entry: DiaryEntry }) {
     'yyyy年M月d日(E)',
     { locale: ja }
   )
+
+  const key = entry.is_public ? myPublicKey : privateKey
 
   useEffect(() => {
     const needsKey = isEncrypted(entry.title) || isEncrypted(entry.content)
@@ -63,9 +65,10 @@ export default function EditDiaryClient({ entry }: { entry: DiaryEntry }) {
     setIsSaving(true)
     let encTitle = title || formattedDate
     let encContent = content
-    if (key) {
-      encTitle = await encrypt(encTitle, key)
-      encContent = await encrypt(content, key)
+    const saveKey = isPublic ? myPublicKey : privateKey
+    if (saveKey) {
+      encTitle = await encrypt(encTitle, saveKey)
+      encContent = await encrypt(content, saveKey)
     }
     const res = await fetch(`/api/diary/${entry.id}`, {
       method: 'PATCH',
@@ -99,7 +102,7 @@ export default function EditDiaryClient({ entry }: { entry: DiaryEntry }) {
           </div>
         </div>
 
-        <UnlockBanner sample={needsKey ? (entry.title ?? undefined) : undefined} />
+        {needsKey && <UnlockBanner sample={entry.title ?? undefined} />}
 
         {decryptedTitle !== null && decryptedContent !== null && (
           <div style={{ height: 'calc(100vh - 130px)' }}>

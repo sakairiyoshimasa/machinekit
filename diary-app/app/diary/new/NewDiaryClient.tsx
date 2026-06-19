@@ -14,7 +14,7 @@ import UnlockBanner from '@/components/UnlockBanner'
 
 export default function NewDiaryClient() {
   const router = useRouter()
-  const { key } = useEncryption()
+  const { privateKey, myPublicKey } = useEncryption()
   const today = format(new Date(), 'yyyy-MM-dd')
   const todayLabel = format(new Date(), 'yyyy年M月d日(E)', { locale: ja })
   const [isSaving, setIsSaving] = useState(false)
@@ -27,6 +27,7 @@ export default function NewDiaryClient() {
     setIsSaving(true)
     let encTitle = title || todayLabel
     let encContent = content
+    const key = isPublic ? myPublicKey : privateKey
     if (key) {
       encTitle = await encrypt(encTitle, key)
       encContent = await encrypt(content, key)

@@ -3,23 +3,10 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
-  const { email, password, groupCode } = await request.json()
+  const { email, password } = await request.json()
 
-  if (!email || !password || !groupCode) {
-    return NextResponse.json({ error: 'すべての項目を入力してください' }, { status: 400 })
-  }
-
-  const admin = createAdminClient()
-
-  const { data: existing } = await admin
-    .from('profiles')
-    .select('id')
-    .eq('group_code', groupCode)
-
-  const isNewGroup = !existing || existing.length === 0
-
-  if (existing && existing.length >= 2) {
-    return NextResponse.json({ error: 'このパスフレーズのグループは満員です（最大2名）' }, { status: 400 })
+  if (!email || !password) {
+    return NextResponse.json({ error: 'メールアドレスとパスワードを入力してください' }, { status: 400 })
   }
 
   const supabase = await createClient()
@@ -39,14 +26,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'アカウント作成に失敗しました' }, { status: 400 })
   }
 
+  const admin = createAdminClient()
   const { error: profileError } = await admin
     .from('profiles')
     .insert({
       id: authData.user.id,
       email,
-      group_code: groupCode,
-      is_owner: isNewGroup,
-      status: isNewGroup ? 'approved' : 'pending',
+      status: 'approved',
+      is_owner: true,
     })
 
   if (profileError) {
@@ -54,5 +41,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'プロフィール作成に失敗しました' }, { status: 500 })
   }
 
-  return NextResponse.json({ success: true, newGroup: isNewGroup })
+  return NextResponse.json({ success: true })
 }

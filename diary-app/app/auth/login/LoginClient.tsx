@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { BookOpen } from 'lucide-react'
@@ -9,17 +9,7 @@ import Link from 'next/link'
 export default function LoginClient() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [groupCode, setGroupCode] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const passphrase = params.get('passphrase')
-    if (passphrase) {
-      setGroupCode(passphrase)
-      setIsSignUp(true)
-    }
-  }, [])
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -36,16 +26,14 @@ export default function LoginClient() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, groupCode }),
+        body: JSON.stringify({ email, password }),
       })
       const data = await res.json()
       if (!res.ok) {
         setError(data.error)
-      } else if (data.newGroup) {
+      } else {
         setMessage('アカウントを作成しました。ログインしてください。')
         setIsSignUp(false)
-      } else {
-        setMessage('登録しました。パスフレーズのオーナーの承認をお待ちください。')
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -96,22 +84,6 @@ export default function LoginClient() {
               placeholder="6文字以上"
             />
           </div>
-          {isSignUp && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">パスフレーズ</label>
-              <input
-                type="text"
-                value={groupCode}
-                onChange={e => setGroupCode(e.target.value)}
-                required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                placeholder="パスフレーズを入力"
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                新しいパスフレーズで登録するとグループオーナーになります。既存のパスフレーズを入力するとオーナーの承認が必要です。
-              </p>
-            </div>
-          )}
 
           {error && <p className="text-red-500 text-sm bg-red-50 rounded-lg p-3">{error}</p>}
           {message && <p className="text-green-600 text-sm bg-green-50 rounded-lg p-3">{message}</p>}

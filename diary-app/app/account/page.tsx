@@ -11,17 +11,16 @@ export default async function AccountPage() {
   const admin = createAdminClient()
   const { data: profile } = await admin
     .from('profiles')
-    .select('group_code, is_owner, status')
+    .select('my_public_slot, partner_slot, partner_user_id')
     .eq('id', user.id)
     .single()
-
-  if (!profile) redirect('/diary')
 
   return (
     <AccountClient
       email={user.email ?? ''}
-      groupCode={profile.group_code}
-      isOwner={profile.is_owner}
+      myPublicSlot={profile?.my_public_slot ?? null}
+      partnerSlot={profile?.partner_slot ?? null}
+      partnerUserId={profile?.partner_user_id ?? null}
     />
   )
 }

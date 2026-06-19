@@ -1,5 +1,4 @@
 import { createServerClient } from '@supabase/ssr'
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
@@ -30,31 +29,12 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
   const isApiRoute = request.nextUrl.pathname.startsWith('/api')
-  const isPublicPage = request.nextUrl.pathname === '/help'
-  const isPendingPage = request.nextUrl.pathname === '/pending'
+  const isPublicPage = ['/help', '/pending'].includes(request.nextUrl.pathname)
 
   if (!user && !isAuthPage && !isApiRoute && !isPublicPage && request.nextUrl.pathname !== '/') {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     return NextResponse.redirect(url)
-  }
-
-  if (user && !isAuthPage && !isApiRoute && !isPublicPage && !isPendingPage) {
-    const admin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-    const { data: profile } = await admin
-      .from('profiles')
-      .select('status')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || profile.status === 'pending') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/pending'
-      return NextResponse.redirect(url)
-    }
   }
 
   if (user && isAuthPage) {

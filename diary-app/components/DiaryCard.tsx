@@ -10,12 +10,13 @@ import { useEncryption } from '@/contexts/EncryptionContext'
 import { decrypt, isEncrypted } from '@/lib/crypto'
 
 export default function DiaryCard({ entry }: { entry: DiaryEntry }) {
-  const { key } = useEncryption()
+  const { privateKey, myPublicKey } = useEncryption()
   const [title, setTitle] = useState<string | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
 
   const formattedDate = format(new Date(entry.date + 'T00:00:00'), 'M月d日(E)', { locale: ja })
   const needsKey = isEncrypted(entry.title) || isEncrypted(entry.content)
+  const key = entry.is_public ? myPublicKey : privateKey
 
   useEffect(() => {
     if (!needsKey) {
@@ -48,6 +49,9 @@ export default function DiaryCard({ entry }: { entry: DiaryEntry }) {
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs text-gray-400">{formattedDate}</span>
               {entry.mood && <span className="text-base">{MOOD_EMOJI[entry.mood as Mood]}</span>}
+              {entry.is_public && (
+                <span className="text-xs text-blue-400 border border-blue-200 rounded px-1">公開</span>
+              )}
             </div>
             {title !== null ? (
               <>

@@ -15,13 +15,29 @@ export default async function FeedPage() {
   if (!user) redirect('/auth/login')
 
   const admin = createAdminClient()
-  const { data: entries } = await admin
+
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('partner_user_id')
+    .eq('id', user.id)
+    .single()
+
+  const partnerUserId = profile?.partner_user_id ?? null
+
+  const query = admin
     .from('diary_entries')
     .select('*')
     .eq('is_public', true)
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
 
+  if (partnerUserId) {
+    query.in('user_id', [user.id, partnerUserId])
+  } else {
+    query.eq('user_id', user.id)
+  }
+
+  const { data: entries } = await query
   const diaryEntries = (entries as DiaryEntry[] | null) ?? []
   const encryptedSample = diaryEntries.find(e => isEncrypted(e.title))?.title ?? undefined
 

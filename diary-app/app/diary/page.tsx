@@ -6,7 +6,7 @@ import { DiaryEntry } from '@/types'
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import Link from 'next/link'
-import { PenLine, BookOpen, LogOut, Users, Bell, Settings, UserCircle, ShieldCheck } from 'lucide-react'
+import { PenLine, BookOpen, LogOut, Users, UserCircle, ShieldCheck } from 'lucide-react'
 import UnlockBanner from '@/components/UnlockBanner'
 import { isEncrypted } from '@/lib/crypto'
 
@@ -20,22 +20,6 @@ export default async function DiaryListPage() {
 
   const admin = createAdminClient()
 
-  const { data: myProfile } = await admin
-    .from('profiles')
-    .select('is_owner, group_code')
-    .eq('id', user.id)
-    .single()
-
-  let pendingCount = 0
-  if (myProfile?.is_owner) {
-    const { count } = await admin
-      .from('profiles')
-      .select('*', { count: 'exact', head: true })
-      .eq('group_code', myProfile.group_code)
-      .eq('status', 'pending')
-    pendingCount = count ?? 0
-  }
-
   const { data: entries } = await admin
     .from('diary_entries')
     .select('*')
@@ -44,7 +28,7 @@ export default async function DiaryListPage() {
     .order('created_at', { ascending: false })
 
   const allEntries = (entries as DiaryEntry[] | null) ?? []
-  const encryptedSample = allEntries.find(e => isEncrypted(e.title))?.title
+  const encryptedSample = allEntries.find(e => !e.is_public && isEncrypted(e.title))?.title
 
   const groupedEntries = allEntries.reduce(
     (groups, entry) => {
@@ -65,32 +49,6 @@ export default async function DiaryListPage() {
             <h1 className="font-bold text-gray-800">дневник на двоих</h1>
           </div>
           <div className="flex items-center gap-2">
-            {myProfile?.is_owner && (
-              <Link
-                href="/settings"
-                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg transition-colors"
-                title="設定"
-              >
-                <Settings className="w-4 h-4" />
-              </Link>
-            )}
-            {myProfile?.is_owner && (
-              <Link
-                href="/approve"
-                className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border transition-all ${
-                  pendingCount > 0
-                    ? 'text-amber-600 border-amber-300 bg-amber-50 hover:bg-amber-100'
-                    : 'text-gray-400 border-gray-200 hover:text-gray-600'
-                }`}
-              >
-                <Bell className="w-3.5 h-3.5" />
-                {pendingCount > 0 && (
-                  <span className="bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                    {pendingCount}
-                  </span>
-                )}
-              </Link>
-            )}
             <Link
               href="/feed"
               className="flex items-center gap-1.5 text-gray-500 hover:text-gray-700 text-sm px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 transition-all"
@@ -143,7 +101,7 @@ export default async function DiaryListPage() {
             </div>
             <h2 className="text-gray-600 font-medium mb-2">まだ日記がありません</h2>
             <p className="text-gray-400 text-sm mb-6">
-              AIと会話しながら今日の日記を書いてみましょう
+              今日の日記を書いてみましょう
             </p>
             <Link
               href="/diary/new"

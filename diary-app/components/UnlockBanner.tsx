@@ -5,9 +5,10 @@ import { useEncryption } from '@/contexts/EncryptionContext'
 import { Lock, Loader2 } from 'lucide-react'
 
 export default function UnlockBanner({ sample }: { sample?: string }) {
-  const { unlock, isUnlocked } = useEncryption()
+  const { privateKey, unlockPrivate } = useEncryption()
 
-  if (isUnlocked) return null
+  if (privateKey !== null) return null
+
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -16,7 +17,7 @@ export default function UnlockBanner({ sample }: { sample?: string }) {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const result = await unlock(password, sample)
+    const result = await unlockPrivate(password, sample)
     if (result === 'wrong_password') {
       setError('パスワードが違います')
     }
@@ -28,12 +29,12 @@ export default function UnlockBanner({ sample }: { sample?: string }) {
       <div className="flex items-center gap-2 mb-3">
         <Lock className="w-4 h-4 text-amber-600" />
         <p className="text-sm font-medium text-amber-800">
-          {sample ? '日記を読むには暗号化パスワードが必要です' : '暗号化パスワードを設定してください'}
+          {sample ? '日記を読むには非公開パスワードが必要です' : '非公開パスワードを設定してください'}
         </p>
       </div>
       {!sample && (
         <p className="text-xs text-amber-600 mb-3">
-          パートナーと同じパスワードを決めてください。忘れると日記が読めなくなります。
+          このパスワードは忘れると非公開日記が読めなくなります。パスワードマネージャーへの保存を推奨します。
         </p>
       )}
       <form onSubmit={handleSubmit} className="flex gap-2">
@@ -41,7 +42,7 @@ export default function UnlockBanner({ sample }: { sample?: string }) {
           type="password"
           value={password}
           onChange={e => setPassword(e.target.value)}
-          placeholder="暗号化パスワード"
+          placeholder="非公開パスワード"
           className="flex-1 text-sm border border-amber-200 rounded-lg px-3 py-2 outline-none focus:border-amber-400 bg-white"
           required
         />

@@ -15,12 +15,13 @@ interface Props {
 }
 
 export default function FeedEntryCard({ entry, isOwn }: Props) {
-  const { key } = useEncryption()
+  const { myPublicKey, partnerPublicKey } = useEncryption()
   const [title, setTitle] = useState<string | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
 
   const formattedDate = format(new Date(entry.date + 'T00:00:00'), 'M月d日(E)', { locale: ja })
   const needsKey = isEncrypted(entry.title) || isEncrypted(entry.content)
+  const key = isOwn ? myPublicKey : partnerPublicKey
 
   useEffect(() => {
     if (!needsKey) {

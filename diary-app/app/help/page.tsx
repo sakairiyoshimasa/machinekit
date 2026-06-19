@@ -10,23 +10,27 @@ export default function HelpPage() {
         <ul className="space-y-4 text-sm text-gray-700">
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            登録時に自分でパスフレーズを決めます。新しいパスフレーズで登録するとグループのオーナーになります。
+            メールアドレスとパスワードだけで登録できます。
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            誰かを招待したいときは、アカウント設定のQRコードを見せてください。スキャンするとパスフレーズが自動入力された登録画面が開きます。
+            日記は非公開と公開の2種類があります。デフォルトは非公開です。
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            同じパスフレーズで登録するとグループとなり、公開に設定した日記だけがお互いに閲覧できます。グループは最大2名で、参加にはオーナーの承認が必要です。
+            日記はブラウザ上で暗号化してから保存されます。非公開日記には「非公開パスワード」、公開日記には「公開パスワード」を使います。どちらもアカウント設定で設定してください。
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            日記は記事ごとに公開・非公開が選べます。デフォルトは非公開です。公開にしてもグループ外や未登録のユーザーには見えません。外部への公開機能はありません。
+            相手の公開日記を読むには、アカウント設定で相手のメールアドレスと公開パスワードを登録します。相手に直接教えてもらってください。
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            日記は暗号化パスワードで保護できます。最初の日記を書く前にパスワードを設定すると、内容が暗号化されて保存されます。グループ内で同じパスワードを使ってください。パスワードを忘れると日記が読めなくなります。
+            登録できる相手は1名だけです。フィードには自分と相手の公開日記が表示されます。
+          </li>
+          <li className="flex gap-2">
+            <span className="text-amber-500 mt-0.5">•</span>
+            パスワードを忘れると暗号化した日記が読めなくなります。パスワードマネージャーへの保存を推奨します。
           </li>
           <li className="flex gap-2">
             <span className="text-amber-500 mt-0.5">•</span>

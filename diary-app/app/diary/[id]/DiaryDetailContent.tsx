@@ -15,9 +15,13 @@ interface Props {
 }
 
 export default function DiaryDetailContent({ entry, isOwner, currentUserId, formattedDate }: Props) {
-  const { key } = useEncryption()
+  const { privateKey, myPublicKey, partnerPublicKey } = useEncryption()
   const [title, setTitle] = useState<string | null>(null)
   const [content, setContent] = useState<string | null>(null)
+
+  const key = isOwner
+    ? (entry.is_public ? myPublicKey : privateKey)
+    : partnerPublicKey
 
   useEffect(() => {
     const needsKey = isEncrypted(entry.title) || isEncrypted(entry.content)
@@ -69,7 +73,7 @@ export default function DiaryDetailContent({ entry, isOwner, currentUserId, form
       ) : (
         <div className="flex flex-col items-center py-12 gap-3 text-gray-400">
           <Lock className="w-8 h-8" />
-          <p className="text-sm">暗号化パスワードを入力すると読めます</p>
+          <p className="text-sm">非公開パスワードを入力すると読めます</p>
         </div>
       )}
 
