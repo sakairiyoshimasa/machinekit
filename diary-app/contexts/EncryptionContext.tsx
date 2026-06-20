@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { deriveKey, loadKey, storeKey, clearAllKeys, decrypt, isEncrypted } from '@/lib/crypto'
+import { createClient } from '@/lib/supabase/client'
 
 interface EncryptionContextType {
   privateKey: CryptoKey | null
@@ -30,17 +31,60 @@ export function EncryptionProvider({ children }: { children: ReactNode }) {
   const [partnerUserId, setPartnerUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    Promise.all([
-      loadKey('private'),
-      loadKey('public'),
-      loadKey('partner'),
-    ]).then(([priv, pub, partner]) => {
+    const supabase = createClient()
+
+    const loadKeysForUser = async (userId: string) => {
+      const storedId = sessionStorage.getItem('diary_current_user_id')
+      if (storedId && storedId !== userId) {
+        // Different user — purge stale keys before loading
+        clearAllKeys()
+        sessionStorage.removeItem('diary_current_user_id')
+        sessionStorage.removeItem('diary_partner_user_id')
+        return
+      }
+      sessionStorage.setItem('diary_current_user_id', userId)
+      const [priv, pub, partner] = await Promise.all([
+        loadKey('private'),
+        loadKey('public'),
+        loadKey('partner'),
+      ])
       if (priv) setPrivateKey(priv)
       if (pub) setMyPublicKey(pub)
       if (partner) setPartnerPublicKey(partner)
+      const pid = sessionStorage.getItem('diary_partner_user_id')
+      if (pid) setPartnerUserId(pid)
+    }
+
+    const clearAllState = () => {
+      clearAllKeys()
+      sessionStorage.removeItem('diary_current_user_id')
+      sessionStorage.removeItem('diary_partner_user_id')
+      setPrivateKey(null)
+      setMyPublicKey(null)
+      setPartnerPublicKey(null)
+      setPartnerUserId(null)
+    }
+
+    // Load keys on mount (verify user hasn't changed)
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) loadKeysForUser(user.id)
     })
-    const pid = sessionStorage.getItem('diary_partner_user_id')
-    if (pid) setPartnerUserId(pid)
+
+    // React to sign-in / sign-out events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        clearAllState()
+      } else if (event === 'SIGNED_IN' && session?.user) {
+        const storedId = sessionStorage.getItem('diary_current_user_id')
+        if (storedId && storedId !== session.user.id) {
+          // Account switch — clear stale keys immediately
+          clearAllState()
+        }
+        sessionStorage.setItem('diary_current_user_id', session.user.id)
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
   const loadSlotsWithKey = async (privKey: CryptoKey) => {

@@ -6,9 +6,10 @@ import { DiaryEntry } from '@/types'
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import Link from 'next/link'
-import { PenLine, BookOpen, LogOut, Users, UserCircle, ShieldCheck } from 'lucide-react'
+import { PenLine, BookOpen, Users, UserCircle, ShieldCheck } from 'lucide-react'
 import UnlockBanner from '@/components/UnlockBanner'
 import PublicKeySetupBanner from '@/components/PublicKeySetupBanner'
+import LogoutButton from '@/components/LogoutButton'
 import { isEncrypted } from '@/lib/crypto'
 
 const ADMIN_EMAIL = '3333449@pm.me'
@@ -88,15 +89,7 @@ export default async function DiaryListPage() {
             >
               <UserCircle className="w-4 h-4" />
             </Link>
-            <form action="/api/auth/signout" method="POST">
-              <button
-                type="submit"
-                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg transition-colors"
-                title="ログアウト"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </form>
+            <LogoutButton />
           </div>
         </div>
       </header>

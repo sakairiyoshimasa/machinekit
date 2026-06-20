@@ -3,9 +3,10 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { DiaryEntry } from '@/types'
 import Link from 'next/link'
-import { Users, PenLine, LogOut, BookOpen } from 'lucide-react'
+import { Users, PenLine, BookOpen } from 'lucide-react'
 import FeedEntryCard from '@/components/FeedEntryCard'
 import UnlockBanner from '@/components/UnlockBanner'
+import LogoutButton from '@/components/LogoutButton'
 import { isEncrypted } from '@/lib/crypto'
 
 export default async function FeedPage() {
@@ -77,15 +78,7 @@ export default async function FeedPage() {
               <PenLine className="w-3.5 h-3.5" />
               新しい日記
             </Link>
-            <form action="/api/auth/signout" method="POST">
-              <button
-                type="submit"
-                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg transition-colors"
-                title="ログアウト"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </form>
+            <LogoutButton />
           </div>
         </div>
       </header>
