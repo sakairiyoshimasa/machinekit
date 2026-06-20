@@ -1,21 +1,14 @@
 const PBKDF2_ITERATIONS = 200_000
-const SALTS = {
-  private: 'diary-na-dvoyikh-v1',
-  public: 'diary-public-v1',
-}
-const STORAGE_KEYS = {
-  private: 'diary_private_key',
-  public: 'diary_my_public_key',
-  partner: 'diary_partner_key',
-}
+const PRIVATE_SALT = 'diary-na-dvoyikh-v1'
+const PRIVATE_KEY_STORAGE = 'diary_private_key'
 
-export async function deriveKey(password: string, type: 'private' | 'public' = 'private'): Promise<CryptoKey> {
+export async function deriveKey(password: string): Promise<CryptoKey> {
   const enc = new TextEncoder()
   const keyMaterial = await crypto.subtle.importKey(
     'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']
   )
   return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt: enc.encode(SALTS[type]), iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt: enc.encode(PRIVATE_SALT), iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
     keyMaterial,
     { name: 'AES-GCM', length: 256 },
     true,
@@ -45,14 +38,14 @@ export function isEncrypted(text: string | null | undefined): boolean {
   return typeof text === 'string' && text.startsWith('enc:')
 }
 
-export async function storeKey(type: 'private' | 'public' | 'partner', key: CryptoKey): Promise<void> {
+export async function storeKey(key: CryptoKey): Promise<void> {
   const raw = await crypto.subtle.exportKey('raw', key)
-  sessionStorage.setItem(STORAGE_KEYS[type], btoa(String.fromCharCode(...new Uint8Array(raw))))
+  sessionStorage.setItem(PRIVATE_KEY_STORAGE, btoa(String.fromCharCode(...new Uint8Array(raw))))
 }
 
-export async function loadKey(type: 'private' | 'public' | 'partner'): Promise<CryptoKey | null> {
+export async function loadKey(): Promise<CryptoKey | null> {
   try {
-    const b64 = sessionStorage.getItem(STORAGE_KEYS[type])
+    const b64 = sessionStorage.getItem(PRIVATE_KEY_STORAGE)
     if (!b64) return null
     const raw = Uint8Array.from(atob(b64), c => c.charCodeAt(0))
     return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt'])
@@ -62,6 +55,10 @@ export async function loadKey(type: 'private' | 'public' | 'partner'): Promise<C
 }
 
 export function clearAllKeys(): void {
-  Object.values(STORAGE_KEYS).forEach(k => sessionStorage.removeItem(k))
+  // Clear current and any legacy storage keys
+  sessionStorage.removeItem(PRIVATE_KEY_STORAGE)
+  sessionStorage.removeItem('diary_my_public_key')
+  sessionStorage.removeItem('diary_partner_key')
   sessionStorage.removeItem('diary_enc_key')
+  sessionStorage.removeItem('diary_partner_user_id')
 }

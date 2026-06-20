@@ -8,7 +8,6 @@ import { ja } from 'date-fns/locale'
 import Link from 'next/link'
 import { PenLine, BookOpen, Users, UserCircle, ShieldCheck } from 'lucide-react'
 import UnlockBanner from '@/components/UnlockBanner'
-import PublicKeySetupBanner from '@/components/PublicKeySetupBanner'
 import LogoutButton from '@/components/LogoutButton'
 import { isEncrypted } from '@/lib/crypto'
 
@@ -22,23 +21,15 @@ export default async function DiaryListPage() {
 
   const admin = createAdminClient()
 
-  const [entriesResult, profileResult] = await Promise.all([
-    admin
-      .from('diary_entries')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('date', { ascending: false })
-      .order('created_at', { ascending: false }),
-    admin
-      .from('profiles')
-      .select('my_public_slot')
-      .eq('id', user.id)
-      .single(),
-  ])
+  const entriesResult = await admin
+    .from('diary_entries')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('date', { ascending: false })
+    .order('created_at', { ascending: false })
 
   const allEntries = (entriesResult.data as DiaryEntry[] | null) ?? []
   const encryptedSample = allEntries.find(e => !e.is_public && isEncrypted(e.title))?.title
-  const hasPublicSlot = !!profileResult.data?.my_public_slot
 
   const groupedEntries = allEntries.reduce(
     (groups, entry) => {
@@ -96,7 +87,6 @@ export default async function DiaryListPage() {
 
       <main className="max-w-2xl mx-auto px-4 py-6">
         <UnlockBanner sample={encryptedSample} />
-        <PublicKeySetupBanner hasPublicSlot={hasPublicSlot} />
         {Object.keys(groupedEntries).length === 0 ? (
           <div className="text-center py-20">
             <div className="bg-amber-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">

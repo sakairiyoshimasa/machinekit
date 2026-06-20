@@ -10,13 +10,11 @@ export async function GET() {
   const admin = createAdminClient()
   const { data: profile } = await admin
     .from('profiles')
-    .select('my_public_slot, partner_slot, partner_user_id')
+    .select('partner_user_id')
     .eq('id', user.id)
     .single()
 
   return NextResponse.json({
-    myPublicSlot: profile?.my_public_slot ?? null,
-    partnerSlot: profile?.partner_slot ?? null,
     partnerUserId: profile?.partner_user_id ?? null,
   })
 }
@@ -29,9 +27,11 @@ export async function PATCH(request: NextRequest) {
   const body = await request.json()
   const updates: Record<string, string | null> = {}
 
-  if ('myPublicSlot' in body) updates.my_public_slot = body.myPublicSlot
-  if ('partnerSlot' in body) updates.partner_slot = body.partnerSlot
   if ('partnerUserId' in body) updates.partner_user_id = body.partnerUserId
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ success: true })
+  }
 
   const admin = createAdminClient()
   const { error } = await admin

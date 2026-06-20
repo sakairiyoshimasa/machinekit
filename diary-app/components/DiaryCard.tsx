@@ -10,13 +10,12 @@ import { useEncryption } from '@/contexts/EncryptionContext'
 import { decrypt, isEncrypted } from '@/lib/crypto'
 
 export default function DiaryCard({ entry }: { entry: DiaryEntry }) {
-  const { privateKey, myPublicKey } = useEncryption()
+  const { privateKey } = useEncryption()
   const [title, setTitle] = useState<string | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
 
   const formattedDate = format(new Date(entry.date + 'T00:00:00'), 'M月d日(E)', { locale: ja })
-  const needsKey = isEncrypted(entry.title) || isEncrypted(entry.content)
-  const key = entry.is_public ? myPublicKey : privateKey
+  const needsKey = !entry.is_public && (isEncrypted(entry.title) || isEncrypted(entry.content))
 
   useEffect(() => {
     if (!needsKey) {
@@ -24,14 +23,14 @@ export default function DiaryCard({ entry }: { entry: DiaryEntry }) {
       setPreview(entry.content)
       return
     }
-    if (!key) {
+    if (!privateKey) {
       setTitle(null)
       setPreview(null)
       return
     }
     Promise.all([
-      decrypt(entry.title || '', key),
-      decrypt(entry.content || '', key),
+      decrypt(entry.title || '', privateKey),
+      decrypt(entry.content || '', privateKey),
     ]).then(([t, c]) => {
       setTitle(t || '無題')
       setPreview(c)
@@ -39,7 +38,7 @@ export default function DiaryCard({ entry }: { entry: DiaryEntry }) {
       setTitle('(復号化エラー)')
       setPreview('')
     })
-  }, [key, entry.title, entry.content, needsKey])
+  }, [privateKey, entry.title, entry.content, needsKey])
 
   return (
     <Link href={`/diary/${entry.id}`}>

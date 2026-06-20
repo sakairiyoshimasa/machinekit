@@ -15,29 +15,27 @@ interface Props {
 }
 
 export default function DiaryDetailContent({ entry, isOwner, currentUserId, formattedDate }: Props) {
-  const { privateKey, myPublicKey, partnerPublicKey } = useEncryption()
+  const { privateKey } = useEncryption()
   const [title, setTitle] = useState<string | null>(null)
   const [content, setContent] = useState<string | null>(null)
 
-  const key = isOwner
-    ? (entry.is_public ? myPublicKey : privateKey)
-    : partnerPublicKey
+  // Only own private entries need decryption; public entries and partner entries are plain text
+  const needsKey = isOwner && !entry.is_public && (isEncrypted(entry.title) || isEncrypted(entry.content))
 
   useEffect(() => {
-    const needsKey = isEncrypted(entry.title) || isEncrypted(entry.content)
     if (!needsKey) {
       setTitle(entry.title || '無題')
       setContent(entry.content)
       return
     }
-    if (!key) {
+    if (!privateKey) {
       setTitle(null)
       setContent(null)
       return
     }
     Promise.all([
-      decrypt(entry.title || '', key),
-      decrypt(entry.content || '', key),
+      decrypt(entry.title || '', privateKey),
+      decrypt(entry.content || '', privateKey),
     ]).then(([t, c]) => {
       setTitle(t || '無題')
       setContent(c)
@@ -45,7 +43,7 @@ export default function DiaryDetailContent({ entry, isOwner, currentUserId, form
       setTitle('(復号化エラー)')
       setContent('パスワードが正しくないか、データが破損しています。')
     })
-  }, [key, entry.title, entry.content])
+  }, [privateKey, entry.title, entry.content, needsKey])
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8">

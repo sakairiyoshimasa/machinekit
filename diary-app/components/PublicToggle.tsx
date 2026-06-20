@@ -17,38 +17,32 @@ export default function PublicToggle({ entryId, title, content, initialIsPublic 
   const router = useRouter()
   const [isPublic, setIsPublic] = useState(initialIsPublic)
   const [loading, setLoading] = useState(false)
-  const { privateKey, myPublicKey } = useEncryption()
+  const { privateKey } = useEncryption()
 
   const toggle = async () => {
     setLoading(true)
     const newIsPublic = !isPublic
 
-    // current key (for decrypt) → new key (for re-encrypt)
-    const fromKey = isPublic ? myPublicKey : privateKey
-    const toKey = isPublic ? privateKey : myPublicKey
-
     let newTitle = title
     let newContent = content
 
-    const needsReencrypt = isEncrypted(title) || isEncrypted(content)
-
-    if (needsReencrypt) {
-      if (!fromKey || !toKey) {
-        // Keys not available — cannot safely toggle; bail out silently
-        setLoading(false)
-        return
-      }
-      try {
-        if (isEncrypted(title) && title) {
-          newTitle = await encrypt(await decrypt(title, fromKey), toKey)
+    if (newIsPublic) {
+      // private → public: decrypt if needed, save as plain text
+      if (isEncrypted(title) || isEncrypted(content)) {
+        if (!privateKey) { setLoading(false); return }
+        try {
+          if (isEncrypted(title) && title) newTitle = await decrypt(title, privateKey)
+          if (isEncrypted(content) && content) newContent = await decrypt(content, privateKey)
+        } catch {
+          setLoading(false)
+          return
         }
-        if (isEncrypted(content) && content) {
-          newContent = await encrypt(await decrypt(content, fromKey), toKey)
-        }
-      } catch {
-        setLoading(false)
-        return
       }
+    } else {
+      // public → private: encrypt with privateKey
+      if (!privateKey) { setLoading(false); return }
+      newTitle = await encrypt(title || '', privateKey)
+      newContent = await encrypt(content || '', privateKey)
     }
 
     const res = await fetch(`/api/diary/${entryId}`, {

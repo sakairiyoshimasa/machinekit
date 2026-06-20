@@ -14,7 +14,7 @@ import UnlockBanner from '@/components/UnlockBanner'
 
 export default function EditDiaryClient({ entry }: { entry: DiaryEntry }) {
   const router = useRouter()
-  const { privateKey, myPublicKey } = useEncryption()
+  const { privateKey } = useEncryption()
   const [isSaving, setIsSaving] = useState(false)
   const [decryptedTitle, setDecryptedTitle] = useState<string | null>(null)
   const [decryptedContent, setDecryptedContent] = useState<string | null>(null)
@@ -25,23 +25,22 @@ export default function EditDiaryClient({ entry }: { entry: DiaryEntry }) {
     { locale: ja }
   )
 
-  const key = entry.is_public ? myPublicKey : privateKey
+  const needsKey = !entry.is_public && (isEncrypted(entry.title) || isEncrypted(entry.content))
 
   useEffect(() => {
-    const needsKey = isEncrypted(entry.title) || isEncrypted(entry.content)
     if (!needsKey) {
       setDecryptedTitle(entry.title || '')
       setDecryptedContent(entry.content || '')
       return
     }
-    if (!key) {
+    if (!privateKey) {
       setDecryptedTitle(null)
       setDecryptedContent(null)
       return
     }
     Promise.all([
-      decrypt(entry.title || '', key),
-      decrypt(entry.content || '', key),
+      decrypt(entry.title || '', privateKey),
+      decrypt(entry.content || '', privateKey),
     ]).then(([t, c]) => {
       setDecryptedTitle(t)
       setDecryptedContent(c)
@@ -49,7 +48,7 @@ export default function EditDiaryClient({ entry }: { entry: DiaryEntry }) {
       setDecryptedTitle('')
       setDecryptedContent('')
     })
-  }, [key, entry.title, entry.content])
+  }, [privateKey, entry.title, entry.content, needsKey])
 
   const handleSave = async ({
     title,
@@ -65,10 +64,9 @@ export default function EditDiaryClient({ entry }: { entry: DiaryEntry }) {
     setIsSaving(true)
     let encTitle = title || formattedDate
     let encContent = content
-    const saveKey = isPublic ? myPublicKey : privateKey
-    if (saveKey) {
-      encTitle = await encrypt(encTitle, saveKey)
-      encContent = await encrypt(content, saveKey)
+    if (!isPublic && privateKey) {
+      encTitle = await encrypt(encTitle, privateKey)
+      encContent = await encrypt(content, privateKey)
     }
     const res = await fetch(`/api/diary/${entry.id}`, {
       method: 'PATCH',
@@ -87,8 +85,6 @@ export default function EditDiaryClient({ entry }: { entry: DiaryEntry }) {
     }
   }
 
-  const needsKey = isEncrypted(entry.title) || isEncrypted(entry.content)
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto px-4 py-4">
@@ -102,7 +98,7 @@ export default function EditDiaryClient({ entry }: { entry: DiaryEntry }) {
           </div>
         </div>
 
-        {needsKey && <UnlockBanner sample={!entry.is_public && isEncrypted(entry.title) ? entry.title ?? undefined : undefined} />}
+        {needsKey && <UnlockBanner sample={entry.title ?? undefined} />}
 
         {decryptedTitle !== null && decryptedContent !== null && (
           <div style={{ height: 'calc(100vh - 130px)' }}>

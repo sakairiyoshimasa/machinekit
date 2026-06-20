@@ -13,7 +13,7 @@ export default async function AccountPage() {
   const [profileResult, entriesResult] = await Promise.all([
     admin
       .from('profiles')
-      .select('my_public_slot, partner_slot, partner_user_id')
+      .select('partner_user_id')
       .eq('id', user.id)
       .single(),
     admin
@@ -24,16 +24,13 @@ export default async function AccountPage() {
       .limit(10),
   ])
 
-  const profile = profileResult.data
   const entries = entriesResult.data ?? []
   const encryptedSample = entries.find(e => isEncrypted(e.title))?.title ?? null
 
   return (
     <AccountClient
       email={user.email ?? ''}
-      myPublicSlot={profile?.my_public_slot ?? null}
-      partnerSlot={profile?.partner_slot ?? null}
-      partnerUserId={profile?.partner_user_id ?? null}
+      partnerUserId={profileResult.data?.partner_user_id ?? null}
       encryptedSample={encryptedSample}
     />
   )
