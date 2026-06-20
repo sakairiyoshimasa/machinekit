@@ -39,7 +39,20 @@ export default async function FeedPage() {
 
   const { data: entries } = await query
   const diaryEntries = (entries as DiaryEntry[] | null) ?? []
-  const encryptedSample = diaryEntries.find(e => isEncrypted(e.title))?.title ?? undefined
+
+  // Use a private entry as unlock sample — public entries are encrypted with myPublicKey,
+  // which differs from privateKey (different derivation salt), so verification would always fail.
+  const { data: privateSampleRow } = await admin
+    .from('diary_entries')
+    .select('title')
+    .eq('user_id', user.id)
+    .eq('is_public', false)
+    .like('title', 'enc:%')
+    .limit(1)
+    .maybeSingle()
+
+  const hasEncryptedFeedEntries = diaryEntries.some(e => isEncrypted(e.title))
+  const unlockSample = privateSampleRow?.title ?? undefined
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -78,7 +91,7 @@ export default async function FeedPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6">
-        {encryptedSample && <UnlockBanner sample={encryptedSample} />}
+        {hasEncryptedFeedEntries && <UnlockBanner sample={unlockSample} />}
 
         {diaryEntries.length === 0 ? (
           <div className="text-center py-20">

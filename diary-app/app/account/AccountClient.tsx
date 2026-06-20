@@ -16,12 +16,13 @@ interface Props {
 }
 
 export default function AccountClient({ email, myPublicSlot, partnerSlot, partnerUserId: initialPartnerUserId, encryptedSample }: Props) {
-  const { privateKey, applyPublicKeys } = useEncryption()
+  const { privateKey, myPublicKey, applyPublicKeys } = useEncryption()
 
   const [myPublicPassword, setMyPublicPassword] = useState('')
   const [savingMyPublic, setSavingMyPublic] = useState(false)
   const [myPublicSaved, setMyPublicSaved] = useState(false)
   const [myPublicError, setMyPublicError] = useState('')
+  const [myPublicProgress, setMyPublicProgress] = useState('')
   const [showMyPublic, setShowMyPublic] = useState(false)
 
   const [partnerEmail, setPartnerEmail] = useState('')
@@ -48,7 +49,37 @@ export default function AccountClient({ email, myPublicSlot, partnerSlot, partne
     if (!privateKey) return
     setSavingMyPublic(true)
     setMyPublicError('')
+    setMyPublicProgress('')
     try {
+      const newPubKey = await deriveKey(myPublicPassword, 'public')
+
+      // Re-encrypt existing public entries when changing an existing password
+      if (myPublicKey && hasMyPublicSlot) {
+        setMyPublicProgress('日記を取得中...')
+        const entriesRes = await fetch('/api/diary')
+        if (!entriesRes.ok) throw new Error('日記の取得に失敗しました')
+        const entries: Array<{ id: string; title: string | null; content: string | null; is_public: boolean }> = await entriesRes.json()
+
+        const targets = entries.filter(e => e.is_public && (isEncrypted(e.title) || isEncrypted(e.content)))
+        for (let i = 0; i < targets.length; i++) {
+          const entry = targets[i]
+          setMyPublicProgress(`公開日記を再暗号化中... ${i + 1}/${targets.length}件`)
+          const newTitle = isEncrypted(entry.title)
+            ? await encrypt(await decrypt(entry.title!, myPublicKey), newPubKey)
+            : entry.title
+          const newContent = isEncrypted(entry.content)
+            ? await encrypt(await decrypt(entry.content!, myPublicKey), newPubKey)
+            : entry.content
+          const patchRes = await fetch(`/api/diary/${entry.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: newTitle, content: newContent }),
+          })
+          if (!patchRes.ok) throw new Error('日記の更新に失敗しました')
+        }
+        setMyPublicProgress('')
+      }
+
       const encryptedSlot = await encrypt(myPublicPassword, privateKey)
       const res = await fetch('/api/account/slots', {
         method: 'PATCH',
@@ -56,14 +87,14 @@ export default function AccountClient({ email, myPublicSlot, partnerSlot, partne
         body: JSON.stringify({ myPublicSlot: encryptedSlot }),
       })
       if (!res.ok) throw new Error('保存に失敗しました')
-      const pubKey = await deriveKey(myPublicPassword, 'public')
-      await storeKey('public', pubKey)
-      applyPublicKeys(pubKey, null, null)
+      await storeKey('public', newPubKey)
+      applyPublicKeys(newPubKey, null, null)
       setMyPublicSaved(true)
       setMyPublicPassword('')
       setTimeout(() => setMyPublicSaved(false), 3000)
-    } catch {
-      setMyPublicError('保存に失敗しました')
+    } catch (err) {
+      setMyPublicError(err instanceof Error ? err.message : '保存に失敗しました')
+      setMyPublicProgress('')
     }
     setSavingMyPublic(false)
   }
@@ -234,7 +265,7 @@ export default function AccountClient({ email, myPublicSlot, partnerSlot, partne
               </div>
               <p className="text-xs text-gray-400 mb-4">
                 公開日記の暗号化に使います。相手に教えると、相手があなたの公開日記を読めるようになります。
-                {hasMyPublicSlot && ' 現在設定済みです。変更するには新しいパスワードを入力してください。'}
+                {hasMyPublicSlot && ' 現在設定済みです。変更すると既存の公開日記も自動で再暗号化されます。'}
               </p>
               <form onSubmit={handleSaveMyPublic} className="flex gap-2">
                 <div className="relative flex-1">
@@ -256,7 +287,9 @@ export default function AccountClient({ email, myPublicSlot, partnerSlot, partne
                   disabled={savingMyPublic || !myPublicPassword}
                   className="bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5"
                 >
-                  {savingMyPublic ? <Loader2 className="w-4 h-4 animate-spin" /> : myPublicSaved ? <Check className="w-4 h-4" /> : '保存'}
+                  {savingMyPublic
+                    ? <><Loader2 className="w-4 h-4 animate-spin" />{myPublicProgress ? <span className="text-xs">{myPublicProgress}</span> : '保存中'}</>
+                    : myPublicSaved ? <><Check className="w-4 h-4" />保存済み</> : '保存'}
                 </button>
               </form>
               {myPublicError && <p className="text-red-500 text-xs mt-2">{myPublicError}</p>}
