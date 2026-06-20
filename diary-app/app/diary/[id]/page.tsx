@@ -55,7 +55,12 @@ export default async function DiaryDetailPage({
           <div className="flex items-center gap-2">
             {isOwner && (
               <>
-                <PublicToggle entryId={id} initialIsPublic={diaryEntry.is_public ?? false} />
+                <PublicToggle
+                  entryId={id}
+                  title={diaryEntry.title}
+                  content={diaryEntry.content}
+                  initialIsPublic={diaryEntry.is_public ?? false}
+                />
                 <Link
                   href={`/diary/${id}/edit`}
                   className="flex items-center gap-1.5 text-gray-500 hover:text-gray-700 text-sm px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 transition-all"
@@ -71,7 +76,7 @@ export default async function DiaryDetailPage({
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-8">
-        <UnlockBanner sample={isEncrypted(diaryEntry.title) ? diaryEntry.title ?? undefined : undefined} />
+        <UnlockBanner sample={!diaryEntry.is_public && isEncrypted(diaryEntry.title) ? diaryEntry.title ?? undefined : undefined} />
         <DiaryDetailContent
           entry={diaryEntry}
           isOwner={isOwner}

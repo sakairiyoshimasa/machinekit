@@ -102,7 +102,7 @@ export default function EditDiaryClient({ entry }: { entry: DiaryEntry }) {
           </div>
         </div>
 
-        {needsKey && <UnlockBanner sample={entry.title ?? undefined} />}
+        {needsKey && <UnlockBanner sample={!entry.is_public && isEncrypted(entry.title) ? entry.title ?? undefined : undefined} />}
 
         {decryptedTitle !== null && decryptedContent !== null && (
           <div style={{ height: 'calc(100vh - 130px)' }}>

@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function AccountClient({ email, myPublicSlot, partnerSlot, partnerUserId: initialPartnerUserId, encryptedSample }: Props) {
-  const { privateKey, myPublicKey, applyPublicKeys } = useEncryption()
+  const { privateKey, myPublicKey, applyPublicKeys, unlockPrivate } = useEncryption()
 
   const [myPublicPassword, setMyPublicPassword] = useState('')
   const [savingMyPublic, setSavingMyPublic] = useState(false)
@@ -161,7 +161,11 @@ export default function AccountClient({ email, myPublicSlot, partnerSlot, partne
     setChangingPassword(true)
     try {
       // 1. 旧鍵を検証
-      const oldKey = await deriveKey(oldPrivatePassword, 'private')
+      // New users (no encryptedSample) have no "current password" field shown,
+      // so use the privateKey already in context rather than an empty-string derivation.
+      const oldKey = encryptedSample
+        ? await deriveKey(oldPrivatePassword, 'private')
+        : (privateKey ?? await deriveKey(oldPrivatePassword, 'private'))
       if (encryptedSample && isEncrypted(encryptedSample)) {
         try {
           await decrypt(encryptedSample, oldKey)
@@ -220,9 +224,8 @@ export default function AccountClient({ email, myPublicSlot, partnerSlot, partne
         })
       }
 
-      // 5. セッション更新
-      await storeKey('private', newKey)
-      applyPublicKeys(null, null, pid)
+      // 5. セッション更新 — re-unlock to update privateKey and all slots in context
+      await unlockPrivate(newPrivatePassword)
 
       setChangePasswordDone(true)
       setOldPrivatePassword('')
